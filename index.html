@@ -2,35 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    http-equiv="Permissions-Policy"
-    content="geolocation=(self)"
-  />
+  <meta http-equiv="Permissions-Policy" content="geolocation=(self)">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GPS Coordinate Finder</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <title>Leaflet GPS Embed</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <style>
-    html, body { margin:0; padding:0; height:100%; }
-    #map { height:100vh; width:100%; }
+    html, body {
+      margin:0; padding:0; overflow:hidden; height:100%;
+    }
+    #map {
+      width:100%; height:calc(100% - 40px);
+    }
     #coord-panel {
-      position:fixed;
-      bottom:20px; left:50%;
-      transform:translateX(-50%);
-      background:rgba(255,255,255,0.95);
-      padding:8px 12px;
-      border-radius:4px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.3);
-      font-family:sans-serif;
-      white-space:nowrap;
-      z-index:1000;
+      height:40px; line-height:40px;
+      width:100%; box-sizing:border-box;
+      padding:0 12px;
+      background:#fff; border-top:1px solid #ddd;
+      font-family:sans-serif; text-align:center;
     }
     #copy-btn {
-      padding:4px 8px;
-      border:none;
-      border-radius:3px;
+      margin-left:8px; padding:4px 8px;
       cursor:pointer;
     }
   </style>
@@ -42,52 +37,60 @@
     <button id="copy-btn">Copy</button>
   </div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
+    // 1) Init map & marker
+    const map = L.map('map').setView([0,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:22, attribution:'© OpenStreetMap contributors'
     }).addTo(map);
+    const marker = L.marker(map.getCenter()).addTo(map);
 
-    const marker = L.marker([0,0], { draggable: true }).addTo(map);
     const coordSpan = document.getElementById('coords');
+    const copyBtn   = document.getElementById('copy-btn');
 
-    function updateCoords(latlng) {
-      coordSpan.textContent =
-        `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`;
+    function update(lat, lng, zoom=null) {
+      coordSpan.textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+      marker.setLatLng([lat, lng]);
+      if (zoom !== null) map.setView([lat, lng], zoom);
     }
 
-    map.on('locationfound', e => {
-      map.setView(e.latlng, 17);
-      marker.setLatLng(e.latlng);
-      updateCoords(e.latlng);
+    // 2) Receive the GPS fix (or null) from Wix via postMessage
+    window.addEventListener('message', ({ data }) => {
+      if (data.coords && data.coords.latitude != null) {
+        update(data.coords.latitude, data.coords.longitude, 20);
+      } else {
+        // no coords → manual mode
+        const c = map.getCenter();
+        update(c.lat, c.lng);
+      }
     });
 
-    map.locate({ setView: false, maxZoom: 17 });
-
-    map.on('locationerror', function(e) {
-      alert('Geolocation failed: ' + e.message);
+    // 3) Manual picking: any pan/zoom will update
+    map.on('moveend', () => {
+      const c = map.getCenter();
+      update(c.lat, c.lng);
     });
 
-    map.on('move', () => {
-      const center = map.getCenter();
-      marker.setLatLng(center);
-      updateCoords(center);
-    });
-
-    marker.on('move', e => {
-      map.panTo(e.latlng);
-      updateCoords(e.latlng);
-    });
-
-    document.getElementById('copy-btn').addEventListener('click', () => {
+    // 4) Copy button (with fallback)
+    copyBtn.addEventListener('click', () => {
       const text = coordSpan.textContent
-        .replace('Lat: ', '')
-        .replace('Lng: ', '')
-        .split(', ')
-        .join(',');
-      navigator.clipboard.writeText(text);
+        .replace('Lat: ','').replace('Lng: ','')
+        .split(', ').join(',');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1500);
     });
   </script>
 </body>
