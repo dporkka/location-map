@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Permissions-Policy"
+    content="geolocation=(self)"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GPS Coordinate Finder</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <style>
+    html, body { margin:0; padding:0; height:100%; }
+    #map { height:100vh; width:100%; }
+    #coord-panel {
+      position:fixed;
+      bottom:20px; left:50%;
+      transform:translateX(-50%);
+      background:rgba(255,255,255,0.95);
+      padding:8px 12px;
+      border-radius:4px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);
+      font-family:sans-serif;
+      white-space:nowrap;
+      z-index:1000;
+    }
+    #copy-btn {
+      padding:4px 8px;
+      border:none;
+      border-radius:3px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="coord-panel">
+    <span id="coords">Lat: –, Lng: –</span>
+    <button id="copy-btn">Copy</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker([0,0], { draggable: true }).addTo(map);
+    const coordSpan = document.getElementById('coords');
+
+    function updateCoords(latlng) {
+      coordSpan.textContent =
+        `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`;
+    }
+
+    map.on('locationfound', e => {
+      map.setView(e.latlng, 17);
+      marker.setLatLng(e.latlng);
+      updateCoords(e.latlng);
+    });
+
+    map.locate({ setView: false, maxZoom: 17 });
+
+    map.on('locationerror', function(e) {
+      alert('Geolocation failed: ' + e.message);
+    });
+
+    map.on('move', () => {
+      const center = map.getCenter();
+      marker.setLatLng(center);
+      updateCoords(center);
+    });
+
+    marker.on('move', e => {
+      map.panTo(e.latlng);
+      updateCoords(e.latlng);
+    });
+
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      const text = coordSpan.textContent
+        .replace('Lat: ', '')
+        .replace('Lng: ', '')
+        .split(', ')
+        .join(',');
+      navigator.clipboard.writeText(text);
+    });
+  </script>
+</body>
+</html>
