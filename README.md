@@ -71,5 +71,28 @@ To make your map publicly accessible, you can deploy it for free using Netlify:
 ## Contribution
 Pull requests are welcome! Please open an issue first to discuss major changes.
 
+## Wix integration
+
+```
+// in your PAGE code (not Section code)
+import { getCurrentGeolocation } from 'wix-window';
+
+$w.onReady(() => {
+  const htmlComp = $w('#html1');
+
+  // Request a high-accuracy GPS fix in the secure parent context
+  getCurrentGeolocation({ enableHighAccuracy: true, timeout: 10000 })
+    .then(({ coords }) => {
+      // Send the coords into the iframe
+      htmlComp.postMessage({ coords }, '*');
+    })
+    .catch(err => {
+      console.warn('Geolocation error or denied:', err);
+      // Fallback to manual mode
+      htmlComp.postMessage({ coords: null }, '*');
+    });
+});
+```
+
 ## License
 [MIT](LICENSE)
