@@ -2,6 +2,8 @@
 
 A simple web app for interactively finding and copying latitude/longitude coordinates on a map. Built with Leaflet.js and OpenStreetMap tiles. No backend required.
 
+![image](https://github.com/user-attachments/assets/92612c70-125f-4789-ba3c-5a99397c54c2)
+
 ## Features
 
 - 🌍 Interactive map with draggable marker
