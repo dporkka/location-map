@@ -1,4 +1,4 @@
-# GPS Coordinate Finder Map
+# GPS Coordinate Finder
 
 A simple web app for interactively finding and copying latitude/longitude coordinates on a map. Built with Leaflet.js and OpenStreetMap tiles. No backend required.
 
@@ -38,6 +38,33 @@ A simple web app for interactively finding and copying latitude/longitude coordi
 ## Customization
 - To change the default map center, edit the marker's initial coordinates in the HTML file.
 - You can style the map and panel by editing the CSS in the `<style>` block.
+
+## Publishing on Netlify
+
+To make your map publicly accessible, you can deploy it for free using Netlify:
+
+### 1. Rename Your HTML File
+- use`index.html` for the map file
+- Make sure all resources (CSS, JS, images) are referenced with relative paths.
+
+### 2. Prepare Your Project Folder
+- Your folder should look like:
+  ```
+  /projects
+    ├─ index.html
+    ├─ README.md
+    └─ (any other assets)
+  ```
+
+### 3. Deploy to Netlify
+- Go to [Netlify Drop](https://app.netlify.com/drop).
+- Drag and drop your project folder (containing `index.html`) into the window.
+- Netlify will provide a public URL instantly.
+
+**Optional: Continuous Deployment**
+- Push your folder to GitHub.
+- On Netlify, click "Add new site" > "Import an existing project" and connect your repo.
+- Every push to your repo will auto-deploy your site.
 
 ## Contribution
 Pull requests are welcome! Please open an issue first to discuss major changes.
